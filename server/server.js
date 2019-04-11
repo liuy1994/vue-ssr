@@ -4,6 +4,10 @@ const fs = require('fs')
 const path = require('path')
 const koaStatic = require('koa-static')
 
+const Router = require('koa-router')
+const send = require('koa-send')
+const router = new Router()
+
 const resolve = file => {
    return path.resolve(__dirname, file)
 }
@@ -13,8 +17,8 @@ app.use(koaStatic(resolve('./dist')))
 
 // 获得一个createBundleRenderer
 const { createBundleRenderer } = require('vue-server-renderer')
-const bundle = require('./dist/vue-ssr-server-bundle')
-const clientManifest = require('./dist/vue-ssr-client-manifest')
+const bundle = require('../dist/vue-ssr-server-bundle')
+const clientManifest = require('../dist/vue-ssr-client-manifest')
 const renderer = createBundleRenderer(bundle, {
     runInNewContext: false,
     template: fs.readFileSync(resolve('./src/index.template.html'), 'utf-8'),
@@ -30,7 +34,15 @@ const renderToString = context => {
 }
 
 // 添加一个中间件来处理所有请求
-app.use(async (ctx, next) => {
+const handleRequest = async (ctx, next) => {
+    const url = ctx.path
+
+    if (/\w+.[js|css|jpg|jpeg|png|gif|map]/.test(url)) {
+        console.log(`proxy ${url}`)
+        return await send(ctx, url, {root: path.resolve(__dirname,'../dist')})
+    }
+
+    ctx.res.setHeader("Content-Type", "text/html");
     const context = {
         title: 'ssr test',
         url: ctx.url
@@ -38,9 +50,7 @@ app.use(async (ctx, next) => {
     const html = await renderToString(context)
     ctx.body = html
     next()
-})
+}
+router.get('*', handleRequest)
+module.exports = router
 
-const port = 3000
-app.listen(port, () => {
-    console.log(`server started at localhost:${port}`)
-})

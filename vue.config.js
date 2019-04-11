@@ -4,8 +4,12 @@ const nodeExternals = require('webpack-node-externals')
 const merge = require('lodash.merge')
 const TARGET_NODE = process.env.WEBPACK_TARGET === 'node'
 const target = TARGET_NODE ? 'server' : 'client'
-
+const isDev = process.env.NODE_DEV !== 'production'
 module.exports = {
+    baseUrl: isDev ? 'http://127.0.0.1:8081' : '',
+    devServer: {
+        headers: {'Access-Control-Allow-Origin': '*'}
+    },
     css: {
         extract: false
     },
