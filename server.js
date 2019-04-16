@@ -30,11 +30,12 @@ function renderToString(context) {
 app.use(async (ctx, next) => {
     const context = {
         title: "ssr test",
-        url: ctx.url
+        url: ctx.url,
+        other: `<div>12312321</div>`
     };
-    // 将 context 数据渲染为 HTML
-    const html = await renderToString(context);
-    ctx.body = html;
+    // 将 context 数据渲染为 HTML 返回
+    ctx.body = await renderToString(context);
+    next();
 });
 
 const port = 3000;
